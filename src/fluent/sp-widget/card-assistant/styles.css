@@ -1,0 +1,337 @@
+/*
+ * Card Assistant — styles.
+ *
+ * Only theme SCSS variables are used, no raw hex and no !important, so the
+ * widget follows whatever theme the portal is on (including dark variants)
+ * instead of fighting it. Specificity is raised by nesting under the widget
+ * root rather than by forcing overrides.
+ */
+
+.card-assistant {
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $sp-space--sm;
+
+    .fa-credit-card {
+      color: $brand-primary;
+    }
+  }
+
+  /* Which banks the operator is scoped to — quiet, but always visible,
+     because it explains why results are limited. */
+  .ca-perimeter {
+    margin-left: auto;
+    color: $text-muted;
+    font-size: $font-size-small;
+    font-weight: normal;
+  }
+
+  /* ============================================================
+     Thread
+     ============================================================ */
+
+  .ca-thread {
+    max-height: 26rem;
+    overflow-y: auto;
+    padding-right: $sp-space--xs;
+    margin-bottom: $sp-space--lg;
+  }
+
+  .ca-empty {
+    padding: $sp-space--xxl $sp-space--lg;
+
+    .ca-empty-text {
+      margin-top: $sp-space--md;
+      max-width: 32rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  .ca-exchange {
+    padding: $sp-space--sm 0;
+    border-bottom: 1px solid $border-tertiary;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  /* The exchange currently being worked on gets a left rail so the eye
+     lands on it among the history. */
+  .ca-exchange--active {
+    border-left: 3px solid $brand-primary;
+    padding-left: $sp-space--md;
+    margin-left: -$sp-space--md;
+  }
+
+  .ca-bubble {
+    padding: $sp-space--sm $sp-space--md;
+    border-radius: $border-radius-large;
+    margin-bottom: $sp-space--sm;
+    max-width: 90%;
+  }
+
+  .ca-bubble-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .ca-bubble--user {
+    background-color: $background-tertiary;
+    color: $text-primary;
+    margin-left: auto;
+  }
+
+  .ca-bubble--agent {
+    background-color: $background-secondary;
+    color: $text-primary;
+    border: 1px solid $border-tertiary;
+  }
+
+  .ca-bubble-meta {
+    margin-top: $sp-space--xs;
+    font-size: $font-size-xs;
+    color: $text-muted;
+    display: flex;
+    gap: $sp-space--sm;
+  }
+
+  .ca-ref {
+    font-family: monospace;
+  }
+
+  .ca-working {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    color: $text-muted;
+  }
+
+  .ca-outcome {
+    display: flex;
+    align-items: baseline;
+    gap: $sp-space--sm;
+    margin-top: $sp-space--xs;
+    flex-wrap: wrap;
+  }
+
+  .ca-outcome-text {
+    font-size: $font-size-small;
+  }
+
+  .ca-escalated {
+    margin-top: $sp-space--xs;
+    font-size: $font-size-small;
+    color: $text-muted;
+  }
+
+  .ca-new-conv {
+    margin-left: $sp-space--sm;
+  }
+
+  .ca-deck-link {
+    font-size: $font-size-small;
+  }
+
+  .ca-new-conv-confirm {
+    border-bottom: 1px solid $border-tertiary;
+    background-color: $background-secondary;
+
+    .ca-new-conv-text {
+      margin-bottom: $sp-space--sm;
+      color: $text-secondary;
+    }
+  }
+
+  /* ============================================================
+     Question — the agent is waiting on an answer
+     ============================================================ */
+
+  /* Visually distinct from the approval block: blue means "answer me",
+     amber means "authorise a change". Two different asks, two different
+     looks, so the operator is never unsure which one they are in. */
+  .ca-question {
+    border: 2px solid $brand-info;
+    border-radius: $border-radius-large;
+    background-color: $state-info-bg;
+    padding: $sp-space--lg;
+    margin-bottom: $sp-space--lg;
+  }
+
+  .ca-question-head {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    margin-bottom: $sp-space--sm;
+    color: $state-info-text;
+  }
+
+  .ca-question-prompt {
+    color: $state-info-text;
+    margin-bottom: $sp-space--md;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .ca-question-actions {
+    display: flex;
+    gap: $sp-space--sm;
+    flex-wrap: wrap;
+    margin-bottom: $sp-space--sm;
+  }
+
+  .ca-question-row {
+    display: flex;
+    gap: $sp-space--sm;
+    align-items: flex-start;
+  }
+
+  .ca-question-other {
+    padding-top: $sp-space--xs;
+  }
+
+  /* ============================================================
+     Approval — the one block that must be impossible to miss
+     ============================================================ */
+
+  .ca-approval {
+    border: 2px solid $brand-warning;
+    border-radius: $border-radius-large;
+    background-color: $state-warning-bg;
+    padding: $sp-space--lg;
+    margin-bottom: $sp-space--lg;
+  }
+
+  .ca-approval-head {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    flex-wrap: wrap;
+    margin-bottom: $sp-space--sm;
+    color: $state-warning-text;
+  }
+
+  .ca-approval-badge {
+    margin-left: auto;
+  }
+
+  .ca-approval-summary {
+    color: $state-warning-text;
+    margin-bottom: $sp-space--md;
+  }
+
+  /* The concrete values being approved. Monospaced so numbers and card
+     identifiers are easy to read and compare. */
+  .ca-payload {
+    background-color: $background-primary;
+    border-radius: $border-radius-base;
+    margin-bottom: $sp-space--md;
+
+    .ca-payload-label {
+      width: 40%;
+      font-weight: 600;
+      color: $text-secondary;
+    }
+
+    .ca-payload-value {
+      font-family: monospace;
+      color: $text-primary;
+      word-break: break-all;
+    }
+  }
+
+  .ca-irreversible {
+    margin-bottom: $sp-space--md;
+  }
+
+  .ca-approval-actions {
+    display: flex;
+    gap: $sp-space--sm;
+    flex-wrap: wrap;
+  }
+
+  .ca-reject-form {
+    padding-top: $sp-space--sm;
+  }
+
+  /* ============================================================
+     Status
+     ============================================================ */
+
+  .ca-status {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    margin-bottom: $sp-space--sm;
+    font-size: $font-size-small;
+  }
+
+  .ca-timeout {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    flex-wrap: wrap;
+  }
+
+  /* ============================================================
+     Composer
+     ============================================================ */
+
+  .ca-composer {
+    border-top: 1px solid $border-tertiary;
+    padding-top: $sp-space--md;
+    margin-bottom: 0;
+  }
+
+  .ca-composer-row {
+    display: flex;
+    gap: $sp-space--sm;
+    align-items: flex-start;
+  }
+
+  .ca-input {
+    resize: vertical;
+    min-height: 3.5rem;
+  }
+
+  .ca-send {
+    flex: 0 0 auto;
+    min-height: 3.5rem;
+    min-width: 3.5rem;
+  }
+
+  .ca-hint {
+    margin-top: $sp-space--xs;
+    margin-bottom: 0;
+    font-size: $font-size-xs;
+    color: $text-muted;
+  }
+
+  /* Stack the composer on narrow screens so the send button stays reachable */
+  @media (max-width: $screen-xs-max) {
+    .ca-composer-row {
+      flex-direction: column;
+    }
+
+    .ca-send {
+      width: 100%;
+    }
+
+    .ca-bubble {
+      max-width: 100%;
+    }
+
+    .ca-approval-badge {
+      margin-left: 0;
+    }
+
+    .ca-perimeter {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+}

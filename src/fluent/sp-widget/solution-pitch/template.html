@@ -1,0 +1,455 @@
+<!--
+  Solution Pitch — a deck that reads live data.
+
+  Every figure on these slides is counted at render time from the running
+  application. Nothing is typed in for the demo, so the pitch cannot overstate
+  what was actually built.
+-->
+<div class="pitch" tabindex="0" ng-keydown="c.onKeydown($event)">
+
+  <div class="pitch-chrome">
+    <div class="pitch-progress" role="progressbar"
+         aria-valuemin="0" aria-valuemax="100"
+         aria-valuenow="{{c.progressPercent()}}">
+      <div class="pitch-progress-fill" ng-style="{width: c.progressPercent() + '%'}"></div>
+    </div>
+    <nav class="pitch-dots" aria-label="Sections">
+      <button type="button"
+              class="pitch-dot"
+              ng-repeat="s in c.sections track by s.id"
+              ng-class="{'pitch-dot--on': c.index === $index}"
+              ng-click="c.goTo($index)"
+              title="{{s.label}}">
+        <span class="sr-only">{{s.label}}</span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="pitch-stage">
+
+    <!-- 1. THE IDEA -->
+    <section class="pitch-slide pitch-slide--hero" ng-if="c.isOn('hook')">
+      <p class="pitch-eyebrow">Digital Banking &middot; Card Operations</p>
+      <h1 class="pitch-h1">{{::c.data.title}}</h1>
+      <p class="pitch-lead">{{::c.data.subtitle}}</p>
+
+      <div class="pitch-thesis">
+        <p>
+          Everyone can bolt a chatbot onto a banking portal. The hard part is
+          letting it <strong>change</strong> something &mdash; a card block, a
+          spending limit &mdash; without ever letting it change the
+          <strong>wrong</strong> something.
+        </p>
+        <p class="pitch-thesis-punch">
+          We did not make the model more careful.
+          <strong>We made it structurally unable to break the rules.</strong>
+        </p>
+      </div>
+
+      <p class="pitch-hint">
+        <i class="fa fa-keyboard-o" aria-hidden="true"></i>
+        Click the deck, then use the arrow keys to navigate
+      </p>
+    </section>
+
+    <!-- 2. TODAY -->
+    <section class="pitch-slide" ng-if="c.isOn('problem')">
+      <h2 class="pitch-h2">Where we start from</h2>
+
+      <div class="pitch-split">
+        <div class="pitch-col">
+          <h3 class="pitch-h3 pitch-h3--problem">Today</h3>
+          <ul class="pitch-list">
+            <li>Operators search customers and cards through dedicated portal widgets</li>
+            <li>Every widget calls the ESB directly, so the UI is welded to the API contract</li>
+            <li>Each card operation is a manual sequence: find, verify, act, record</li>
+            <li>Nothing links a request to what was done about it</li>
+          </ul>
+        </div>
+        <div class="pitch-col">
+          <h3 class="pitch-h3 pitch-h3--solution">With this solution</h3>
+          <ul class="pitch-list">
+            <li>One sentence in plain language replaces the whole sequence</li>
+            <li>Consumers talk to an adapter, never to the API or the tables</li>
+            <li>Writes are proposed by AI, authorised by a human, executed deterministically</li>
+            <li>Every exchange is a case: who asked, what was done, how it ended</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pitch-callout">
+        <i class="fa fa-quote-left" aria-hidden="true"></i>
+        <span>&ldquo;The card ending 4417 was lost, block it.&rdquo;</span>
+        <small>one sentence; the agent finds it, checks its state, and asks you to approve</small>
+      </div>
+    </section>
+
+    <!-- 3. ARCHITECTURE -->
+    <section class="pitch-slide" ng-if="c.isOn('architecture')">
+      <h2 class="pitch-h2">Four layers, one rule each</h2>
+
+      <div class="pitch-stack">
+        <div class="pitch-layer pitch-layer--ui">
+          <div class="pitch-layer-name">Experience</div>
+          <div class="pitch-layer-what">Service Portal widget &middot; conversation, approval, audit</div>
+          <div class="pitch-layer-rule">Renders decisions. Never authorises them.</div>
+        </div>
+
+        <div class="pitch-arrow" aria-hidden="true"><i class="fa fa-long-arrow-down"></i></div>
+
+        <div class="pitch-layer pitch-layer--agentic">
+          <div class="pitch-layer-name">Agentic</div>
+          <div class="pitch-layer-what">
+            {{c.data.agentic.workflows}} workflow &middot;
+            {{c.data.agentic.agents}} agents &middot;
+            {{c.data.agentic.tools}} tools
+          </div>
+          <div class="pitch-layer-rule">Understands intent. Proposes. Cannot execute unilaterally.</div>
+        </div>
+
+        <div class="pitch-arrow" aria-hidden="true"><i class="fa fa-long-arrow-down"></i></div>
+
+        <div class="pitch-layer pitch-layer--logic">
+          <div class="pitch-layer-name">Business logic</div>
+          <div class="pitch-layer-what">
+            Adapter, operations and perimeter, as {{c.data.governance.adapterMethods}} script includes
+          </div>
+          <div class="pitch-layer-rule">Owns every rule. Refuses anything invalid, whoever asked.</div>
+        </div>
+
+        <div class="pitch-arrow" aria-hidden="true"><i class="fa fa-long-arrow-down"></i></div>
+
+        <div class="pitch-layer pitch-layer--data">
+          <div class="pitch-layer-name">Data</div>
+          <div class="pitch-layer-what">Local tables today &middot; Digital Banking ESB tomorrow</div>
+          <div class="pitch-layer-rule">Swappable. Nothing above it knows which one it is.</div>
+        </div>
+      </div>
+
+      <p class="pitch-note">
+        The agents hold <strong>no</strong> business rules and <strong>no</strong> queries.
+        They only know how to ask the layer below.
+      </p>
+    </section>
+
+    <!-- 4. WHY IT IS SAFE -->
+    <section class="pitch-slide" ng-if="c.isOn('safety')">
+      <h2 class="pitch-h2">The agent cannot break the rules</h2>
+
+      <p class="pitch-lead-sm">
+        Most agentic demos give the model direct table access. We deliberately
+        did not: every tool calls our business layer, which re-validates
+        everything and refuses what is invalid.
+      </p>
+
+      <div class="pitch-compare">
+        <div class="pitch-compare-col pitch-compare-col--bad">
+          <div class="pitch-compare-head">
+            <i class="fa fa-times-circle" aria-hidden="true"></i> Direct table access
+          </div>
+          <ul class="pitch-list pitch-list--tight">
+            <li>Model could block a cancelled card</li>
+            <li>Could set a daily limit above the monthly one</li>
+            <li>Could edit a transaction amount</li>
+            <li>Could read another bank's data</li>
+          </ul>
+        </div>
+        <div class="pitch-compare-col pitch-compare-col--good">
+          <div class="pitch-compare-head">
+            <i class="fa fa-shield" aria-hidden="true"></i> Through our business layer
+          </div>
+          <ul class="pitch-list pitch-list--tight">
+            <li>State transitions validated: a permanent block is final</li>
+            <li>Limit hierarchy enforced: single, daily, monthly, credit</li>
+            <li>Transactions are read-only except the dispute flag</li>
+            <li>Bank perimeter applied at the data layer, fail-closed</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pitch-evidence" ng-if="c.refusedCount() > 0">
+        <div class="pitch-evidence-number">{{c.refusedCount()}}</div>
+        <div class="pitch-evidence-text">
+          <strong>requests refused by a business rule</strong>
+          <small>
+            Not errors. These are the rules overruling the model, which is why
+            outcome is tracked separately from state.
+          </small>
+        </div>
+      </div>
+
+      <p class="pitch-note" ng-if="c.refusedCount() === 0">
+        Ask the assistant to set a daily limit above the monthly one. It will be
+        refused, and the case will close as
+        <em>Refused by business rule</em> rather than failed.
+      </p>
+    </section>
+
+    <!-- 5. HUMAN CONTROL -->
+    <section class="pitch-slide" ng-if="c.isOn('approval')">
+      <h2 class="pitch-h2">AI proposes. A human authorises.</h2>
+
+      <div class="pitch-flow">
+        <div class="pitch-step">
+          <div class="pitch-step-num">1</div>
+          <div class="pitch-step-body">
+            <strong>Understand</strong>
+            <small>The agent resolves the customer, the card, and its current state</small>
+          </div>
+        </div>
+        <div class="pitch-step">
+          <div class="pitch-step-num">2</div>
+          <div class="pitch-step-body">
+            <strong>Propose</strong>
+            <small>It parks a structured payload on the case. Nothing has changed yet</small>
+          </div>
+        </div>
+        <div class="pitch-step pitch-step--gate">
+          <div class="pitch-step-num"><i class="fa fa-hand-paper-o" aria-hidden="true"></i></div>
+          <div class="pitch-step-body">
+            <strong>Authorise</strong>
+            <small>The operator sees the exact values and approves or rejects</small>
+          </div>
+        </div>
+        <div class="pitch-step">
+          <div class="pitch-step-num">3</div>
+          <div class="pitch-step-body">
+            <strong>Execute</strong>
+            <small>The approved payload runs deterministically. No model involved</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="pitch-keypoint">
+        <i class="fa fa-lock" aria-hidden="true"></i>
+        <div>
+          <strong>What executes is exactly what was approved.</strong>
+          It is never re-derived from the conversation, so a model that changes
+          its mind between proposal and approval cannot alter the action.
+        </div>
+      </div>
+
+      <div class="pitch-stats">
+        <div class="pitch-stat">
+          <div class="pitch-stat-num">{{c.data.approvals.approved}}</div>
+          <div class="pitch-stat-label">Approved</div>
+        </div>
+        <div class="pitch-stat">
+          <div class="pitch-stat-num">{{c.data.approvals.rejected}}</div>
+          <div class="pitch-stat-label">Rejected</div>
+        </div>
+        <div class="pitch-stat">
+          <div class="pitch-stat-num">{{c.data.approvals.expired}}</div>
+          <div class="pitch-stat-label">Expired</div>
+        </div>
+        <div class="pitch-stat">
+          <div class="pitch-stat-num">{{c.data.agentic.guardedTools}}</div>
+          <div class="pitch-stat-label">Guarded tools</div>
+        </div>
+      </div>
+
+      <p class="pitch-note">
+        {{c.data.agentic.readOnlyTools}} read-only tools run freely.
+        {{c.data.agentic.guardedTools}} writing tools require confirmation.
+        Approvals expire, because consent given against stale context is not consent.
+      </p>
+    </section>
+
+    <!-- 6. ISOLATION -->
+    <section class="pitch-slide" ng-if="c.isOn('isolation')">
+      <h2 class="pitch-h2">One platform, many banks, no leaks</h2>
+
+      <p class="pitch-lead-sm">
+        The bank identifier is not a filter the UI applies. It is enforced in
+        the data layer, so it holds for list views, the REST API, reports
+        <em>and</em> the AI agents alike.
+      </p>
+
+      <div class="pitch-perimeter" ng-if="c.data.perimeter">
+        <div class="pitch-perimeter-head">
+          <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+          You are signed in as <strong>{{c.data.perimeter.user}}</strong>
+        </div>
+        <div class="pitch-perimeter-body" ng-if="c.data.scopedView">
+          Entitled to <strong>{{c.data.perimeter.bank_ids.join(', ')}}</strong>.
+          Every figure on this page is already filtered to that scope,
+          <em>including this one.</em> That is the isolation, demonstrating itself.
+        </div>
+        <div class="pitch-perimeter-body" ng-if="!c.data.scopedView">
+          Cross-bank visibility, so these figures cover every bank. Sign in as a
+          bank operator to watch the same page shrink to that bank alone.
+        </div>
+      </div>
+
+      <table class="table pitch-table" ng-if="c.data.banks.length">
+        <caption class="sr-only">Data visible per bank</caption>
+        <thead>
+          <tr>
+            <th scope="col">Bank</th>
+            <th scope="col" class="pitch-num">Customers</th>
+            <th scope="col" class="pitch-num">Cards</th>
+            <th scope="col" class="pitch-num">Transactions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="b in c.data.banks track by b.bank_id">
+            <td><strong>{{b.bank_id}}</strong> <span class="text-muted">{{b.bank_name}}</span></td>
+            <td class="pitch-num">{{b.customers}}</td>
+            <td class="pitch-num">{{b.cards}}</td>
+            <td class="pitch-num">{{b.transactions}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pitch-keypoint">
+        <i class="fa fa-ban" aria-hidden="true"></i>
+        <div>
+          <strong>Fail-closed by design.</strong>
+          A user with no entitlement sees nothing, not everything. An
+          unfiltered query is treated as a bug, so the absence of a rule can
+          never widen access.
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. API-READY -->
+    <section class="pitch-slide" ng-if="c.isOn('decoupling')">
+      <h2 class="pitch-h2">Built for the ESB from day one</h2>
+
+      <p class="pitch-lead-sm">
+        The MVP stores working data in local tables. Production will read the
+        Digital Banking ESB. That switch was designed for before a single table
+        existed.
+      </p>
+
+      <div class="pitch-swap">
+        <div class="pitch-swap-fixed">
+          <div class="pitch-swap-label">Never changes</div>
+          <ul class="pitch-list pitch-list--tight">
+            <li>Portal widget</li>
+            <li>AI agents and their tools</li>
+            <li>Business operations and validations</li>
+            <li>Approval and audit trail</li>
+          </ul>
+        </div>
+        <div class="pitch-swap-arrow" aria-hidden="true">
+          <i class="fa fa-exchange"></i>
+        </div>
+        <div class="pitch-swap-variable">
+          <div class="pitch-swap-label">Swaps out</div>
+          <ul class="pitch-list pitch-list--tight">
+            <li>Local MVP tables</li>
+            <li>REST calls to the ESB</li>
+          </ul>
+          <div class="pitch-swap-note">One adapter. One file.</div>
+        </div>
+      </div>
+
+      <div class="pitch-principles">
+        <div class="pitch-principle">
+          <div class="pitch-principle-head">Business keys, never sys_id</div>
+          <small>
+            Everything is addressed by customer, card and transaction
+            identifiers that still exist when the data comes from an API.
+          </small>
+        </div>
+        <div class="pitch-principle">
+          <div class="pitch-principle-head">DTOs, never GlideRecord</div>
+          <small>
+            The adapter returns plain objects already shaped like a REST
+            payload. A GlideRecord would weld every caller to the table.
+          </small>
+        </div>
+        <div class="pitch-principle">
+          <div class="pitch-principle-head">No card number, anywhere</div>
+          <small>
+            Cards are identified by a tokenised id plus the last four digits.
+            A full card number cannot be stored, requested, or reconstructed.
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. RUNNING NOW -->
+    <section class="pitch-slide" ng-if="c.isOn('live')">
+      <h2 class="pitch-h2">This is not a mockup</h2>
+      <p class="pitch-lead-sm">
+        Every number below was counted from the instance when this page
+        rendered.
+      </p>
+
+      <div class="pitch-stats">
+        <div class="pitch-stat pitch-stat--big">
+          <div class="pitch-stat-num">{{c.data.counts.customers}}</div>
+          <div class="pitch-stat-label">Customers</div>
+        </div>
+        <div class="pitch-stat pitch-stat--big">
+          <div class="pitch-stat-num">{{c.data.counts.cards}}</div>
+          <div class="pitch-stat-label">Cards</div>
+        </div>
+        <div class="pitch-stat pitch-stat--big">
+          <div class="pitch-stat-num">{{c.data.counts.transactions}}</div>
+          <div class="pitch-stat-label">Transactions</div>
+        </div>
+        <div class="pitch-stat pitch-stat--big">
+          <div class="pitch-stat-num">{{c.data.agentic.executions}}</div>
+          <div class="pitch-stat-label">Agent runs</div>
+        </div>
+      </div>
+
+      <div class="pitch-split">
+        <div class="pitch-col">
+          <h3 class="pitch-h3">How requests ended</h3>
+          <div class="pitch-chart" ng-if="c.data.outcomes.length">
+            <div class="pitch-bar-row" ng-repeat="o in c.data.outcomes track by o.key">
+              <div class="pitch-bar-label">{{o.label}}</div>
+              <div class="pitch-bar-track">
+                <div class="pitch-bar" ng-class="o.cssClass"
+                     ng-style="{width: c.outcomeWidth(o.count) + '%'}"></div>
+              </div>
+              <div class="pitch-bar-value">{{o.count}}</div>
+            </div>
+          </div>
+          <p class="text-muted" ng-if="!c.data.outcomes.length">
+            No request has been closed yet. Run one from the assistant and this
+            chart fills in.
+          </p>
+        </div>
+
+        <div class="pitch-col">
+          <h3 class="pitch-h3">Governance in place</h3>
+          <ul class="pitch-facts">
+            <li><strong>{{c.data.governance.acls}}</strong> access controls, deny-by-default on fields</li>
+            <li><strong>{{c.data.governance.queryRules}}</strong> query rules enforcing the bank perimeter</li>
+            <li><strong>{{c.data.governance.roles}}</strong> roles with inheritance</li>
+            <li><strong>{{c.data.governance.bankEntitlements}}</strong> bank entitlements mapped to users</li>
+            <li><strong>{{c.data.counts.requests}}</strong> auditable request cases</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pitch-cta">
+        <a class="btn btn-primary btn-lg" ng-href="{{c.assistantUrl()}}">
+          <i class="fa fa-comments" aria-hidden="true"></i>
+          Try the assistant
+        </a>
+        <span class="pitch-cta-note">Live, with the bank perimeter applied to you</span>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="pitch-nav">
+    <button type="button" class="btn btn-default"
+            ng-click="c.prev()" ng-disabled="c.isFirst()">
+      <i class="fa fa-chevron-left" aria-hidden="true"></i> Back
+    </button>
+    <span class="pitch-nav-pos">
+      {{c.index + 1}} / {{c.sections.length}} &middot; {{c.current().label}}
+    </span>
+    <button type="button" class="btn btn-primary"
+            ng-click="c.next()" ng-disabled="c.isLast()">
+      Next <i class="fa fa-chevron-right" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>

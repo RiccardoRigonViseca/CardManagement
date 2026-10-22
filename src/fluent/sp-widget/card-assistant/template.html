@@ -1,0 +1,334 @@
+<!--
+  Card Assistant — conversational panel with human-in-the-loop approval.
+
+  The approval block is the centrepiece: when the agent parks a proposal, the
+  user sees the concrete values it intends to write and must approve before
+  anything changes.
+-->
+<div class="panel panel-default card-assistant">
+
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      <i class="fa fa-credit-card" aria-hidden="true"></i>
+      {{::c.data.title}}
+      <small class="ca-perimeter" ng-if="c.data.perimeter">
+        <span ng-if="c.data.perimeter.full_visibility">All banks</span>
+        <span ng-if="!c.data.perimeter.full_visibility">
+          Bank{{c.data.perimeter.bank_ids.length > 1 ? 's' : ''}}:
+          {{c.data.perimeter.bank_ids.join(', ')}}
+        </span>
+      </small>
+      <button type="button"
+              class="btn btn-default btn-sm ca-new-conv"
+              ng-if="c.data.canAsk && !c.confirmNewConversation"
+              ng-click="c.askNewConversation()"
+              ng-disabled="c.sending || c.answering || c.deciding"
+              title="Forget this conversation and start a new one">
+        <i class="fa fa-refresh" aria-hidden="true"></i> New conversation
+      </button>
+      <a class="btn btn-link btn-sm ca-deck-link"
+         href="?id=x_snc_card_manag_1_pitch"
+         title="Open the solution deck">
+        <i class="fa fa-lightbulb-o" aria-hidden="true"></i> How it works
+      </a>
+    </h3>
+  </div>
+
+  <!-- Confirm clearing the memory: it is easy to hit by accident mid-task -->
+  <div class="panel-body ca-new-conv-confirm" ng-if="c.confirmNewConversation">
+    <p class="ca-new-conv-text">
+      Start a new conversation? The assistant will forget what you have
+      discussed so far. Your requests stay recorded and are still visible in
+      Card Requests.
+    </p>
+    <button type="button" class="btn btn-primary btn-sm" ng-click="c.newConversation()">
+      Yes, start fresh
+    </button>
+    <button type="button" class="btn btn-link btn-sm" ng-click="c.cancelNewConversation()">
+      Keep talking
+    </button>
+  </div>
+
+  <div class="panel-body">
+
+    <!-- ============================================================
+         Blocking error: no entitlement, nothing usable to show
+         ============================================================ -->
+    <div class="alert alert-warning" ng-if="c.data.error && !c.data.canAsk" role="alert">
+      <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+      {{c.data.error}}
+    </div>
+
+    <div ng-if="c.data.canAsk">
+
+      <!-- Non-blocking error -->
+      <div class="alert alert-danger" ng-if="c.data.error" role="alert">
+        <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+        {{c.data.error}}
+      </div>
+
+      <!-- ============================================================
+           Conversation thread
+           ============================================================ -->
+      <div class="ca-thread" role="log" aria-live="polite" aria-label="Conversation history">
+
+        <div class="ca-empty text-center text-muted" ng-if="!c.data.exchanges.length">
+          <i class="fa fa-comments-o fa-3x" aria-hidden="true"></i>
+          <p class="ca-empty-text">
+            Ask about a customer, a card or its movements. Requests that change
+            something will always be shown to you for approval first.
+          </p>
+        </div>
+
+        <div class="ca-exchange"
+             ng-repeat="ex in c.data.exchanges track by ex.sys_id"
+             ng-class="{'ca-exchange--active': c.data.current && c.data.current.sys_id === ex.sys_id}">
+
+          <!-- what the user asked -->
+          <div class="ca-bubble ca-bubble--user">
+            <div class="ca-bubble-text">{{ex.message}}</div>
+            <div class="ca-bubble-meta">
+              <span class="ca-ref">{{ex.number}}</span>
+              <span>{{ex.opened_display}}</span>
+            </div>
+          </div>
+
+          <!-- what the agent answered -->
+          <div class="ca-bubble ca-bubble--agent" ng-if="ex.agent_response">
+            <div class="ca-bubble-text">{{ex.agent_response}}</div>
+          </div>
+
+          <!-- still working -->
+          <div class="ca-bubble ca-bubble--agent ca-working"
+               ng-if="ex.is_working && !ex.agent_response && !ex.awaiting_confirmation">
+            <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i>
+            <span>Working on it…</span>
+          </div>
+
+          <!-- how it ended -->
+          <div class="ca-outcome" ng-if="ex.is_closed && ex.outcome">
+            <span class="label" ng-class="ex.state_class">{{ex.state_label}}</span>
+            <span class="ca-outcome-text" ng-class="ex.outcome_class">
+              {{ex.outcome_summary || ex.outcome_label}}
+            </span>
+          </div>
+
+          <div class="ca-escalated" ng-if="ex.escalated">
+            <i class="fa fa-user-o" aria-hidden="true"></i>
+            Handed to a human operator.
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           QUESTION — the agent needs an answer before it can continue
+           ============================================================ -->
+      <div class="ca-question"
+           ng-if="c.question()"
+           role="region"
+           aria-label="The assistant is asking you a question">
+
+        <div class="ca-question-head">
+          <i class="fa fa-question-circle" aria-hidden="true"></i>
+          <strong>The assistant needs your answer</strong>
+        </div>
+
+        <div class="ca-question-prompt">{{c.question().prompt}}</div>
+
+        <!-- A yes/no question gets two buttons, so the operator does not have
+             to guess the wording the agent will accept. -->
+        <div class="ca-question-actions" ng-if="c.question().is_confirmation">
+          <button type="button"
+                  class="btn btn-primary"
+                  ng-click="c.answerYes()"
+                  ng-disabled="c.answering">
+            <span ng-if="c.answering">
+              <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Sending…
+            </span>
+            <span ng-if="!c.answering">
+              <i class="fa fa-check" aria-hidden="true"></i> Yes, proceed
+            </span>
+          </button>
+          <button type="button"
+                  class="btn btn-default"
+                  ng-click="c.answerNo()"
+                  ng-disabled="c.answering">
+            <i class="fa fa-times" aria-hidden="true"></i> No
+          </button>
+        </div>
+
+        <!-- Anything else needs words, so give a proper input -->
+        <form class="ca-question-form"
+              ng-if="!c.question().is_confirmation"
+              ng-submit="c.sendAnswerDraft()"
+              novalidate>
+          <label for="ca-answer" class="sr-only">Your answer</label>
+          <div class="ca-question-row">
+            <input type="text"
+                   id="ca-answer"
+                   class="form-control"
+                   ng-model="c.answerDraft"
+                   ng-disabled="c.answering"
+                   placeholder="Type your answer…" />
+            <button type="submit"
+                    class="btn btn-primary"
+                    ng-disabled="c.answering || !c.answerDraft.trim()">
+              <span ng-if="c.answering">
+                <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i>
+              </span>
+              <span ng-if="!c.answering">Answer</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Free-text escape hatch even for yes/no, because a real answer is
+             sometimes neither. -->
+        <div class="ca-question-other" ng-if="c.question().is_confirmation">
+          <input type="text"
+                 class="form-control input-sm"
+                 ng-model="c.answerDraft"
+                 ng-disabled="c.answering"
+                 ng-keydown="$event.keyCode === 13 && c.sendAnswerDraft()"
+                 aria-label="Or reply in your own words"
+                 placeholder="…or reply in your own words and press Enter" />
+        </div>
+      </div>
+
+      <!-- ============================================================
+           APPROVAL — the human gate
+           ============================================================ -->
+      <div class="ca-approval"
+           ng-if="c.data.current && c.data.current.awaiting_confirmation"
+           role="region"
+           aria-label="Operation awaiting your approval">
+
+        <div class="ca-approval-head">
+          <i class="fa fa-hand-paper-o" aria-hidden="true"></i>
+          <strong>Your approval is required</strong>
+          <span class="label label-warning ca-approval-badge">
+            {{c.data.current.proposal.action_label}}
+          </span>
+        </div>
+
+        <p class="ca-approval-summary">{{c.data.current.proposal.summary}}</p>
+
+        <!-- the concrete values being approved, not just the sentence -->
+        <table class="table table-condensed ca-payload" ng-if="c.proposalRows().length">
+          <caption class="sr-only">Values that will be applied</caption>
+          <tbody>
+            <tr ng-repeat="row in c.proposalRows() track by $index">
+              <th scope="row" class="ca-payload-label">{{row.label}}</th>
+              <td class="ca-payload-value">{{row.value}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert alert-danger ca-irreversible" ng-if="c.isIrreversible()" role="alert">
+          <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+          <strong>This cannot be undone.</strong>
+          A permanent block is final — the card has to be reissued.
+        </div>
+
+        <!-- read-only users can see the proposal but not decide on it -->
+        <div class="alert alert-info" ng-if="!c.data.current.can_decide" role="alert">
+          <i class="fa fa-info-circle" aria-hidden="true"></i>
+          Only the person who opened this request can approve or reject it.
+        </div>
+
+        <div class="ca-approval-actions" ng-if="c.data.current.can_decide && !c.showRejectForm">
+          <button type="button"
+                  class="btn btn-primary"
+                  ng-click="c.approve()"
+                  ng-disabled="c.deciding">
+            <span ng-if="c.deciding">
+              <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Applying…
+            </span>
+            <span ng-if="!c.deciding">
+              <i class="fa fa-check" aria-hidden="true"></i> Approve and apply
+            </span>
+          </button>
+          <button type="button"
+                  class="btn btn-default"
+                  ng-click="c.openRejectForm()"
+                  ng-disabled="c.deciding">
+            <i class="fa fa-times" aria-hidden="true"></i> Reject
+          </button>
+        </div>
+
+        <!-- rejection reason -->
+        <div class="ca-reject-form" ng-if="c.showRejectForm">
+          <div class="form-group">
+            <label for="ca-reject-reason">Why are you rejecting this?</label>
+            <input type="text"
+                   id="ca-reject-reason"
+                   class="form-control"
+                   ng-model="c.rejectReason"
+                   placeholder="Optional, but useful for the audit trail" />
+          </div>
+          <button type="button"
+                  class="btn btn-danger"
+                  ng-click="c.reject()"
+                  ng-disabled="c.rejecting">
+            <span ng-if="c.rejecting">
+              <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Rejecting…
+            </span>
+            <span ng-if="!c.rejecting">Confirm rejection</span>
+          </button>
+          <button type="button"
+                  class="btn btn-link"
+                  ng-click="c.cancelReject()"
+                  ng-disabled="c.rejecting">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Polling feedback
+           ============================================================ -->
+      <div class="ca-status text-muted" ng-if="c.polling">
+        <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i>
+        The assistant is working…
+      </div>
+
+      <div class="alert alert-warning ca-timeout" ng-if="c.pollTimedOut" role="alert">
+        <i class="fa fa-clock-o" aria-hidden="true"></i>
+        This is taking longer than expected.
+        <button type="button" class="btn btn-link btn-sm" ng-click="c.retry()">
+          Keep waiting
+        </button>
+      </div>
+
+      <!-- ============================================================
+           Composer
+           ============================================================ -->
+      <form class="ca-composer" ng-submit="c.send()" novalidate>
+        <label for="ca-message" class="sr-only">Your message</label>
+        <div class="ca-composer-row">
+          <textarea id="ca-message"
+                    class="form-control ca-input"
+                    rows="2"
+                    ng-model="c.draft"
+                    ng-keydown="c.onKeydown($event)"
+                    ng-disabled="c.sending"
+                    placeholder="{{::c.data.placeholder}}"></textarea>
+          <button type="submit"
+                  class="btn btn-primary ca-send"
+                  ng-disabled="c.sending || !c.draft.trim()">
+            <span ng-if="c.sending">
+              <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i>
+            </span>
+            <span ng-if="!c.sending">
+              <i class="fa fa-paper-plane" aria-hidden="true"></i>
+            </span>
+            <span class="sr-only">Send</span>
+          </button>
+        </div>
+        <p class="help-block ca-hint">
+          Enter sends · Shift+Enter for a new line
+        </p>
+      </form>
+
+    </div>
+  </div>
+</div>

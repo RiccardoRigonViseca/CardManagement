@@ -1,0 +1,1086 @@
+/*
+ * Solution Pitch — presentation styling.
+ *
+ * Designed for a projector in a room, not a browser at a desk: larger type,
+ * stronger hierarchy, generous whitespace, and numbers treated as the hero
+ * elements they are — the live figures ARE the argument.
+ *
+ * THEME DISCIPLINE
+ * ----------------
+ * Only theme SCSS variables are used for colour, type scale and spacing, so
+ * the deck inherits the portal theme rather than fighting it.
+ *
+ * The variable set is deliberately limited to what the Coral theme and the SP
+ * bootstrap base actually define. The Employee Center themes carry extra type
+ * tokens that are absent here, and — importantly — the Fluent build does NOT
+ * validate SCSS variables: an unknown one compiles clean and then silently
+ * yields an unstyled page at runtime. So every variable below is one already
+ * proven to compile against this theme.
+ *
+ * SCSS colour functions (darken/lighten) are avoided on purpose: theme colours
+ * arrive as sp-rgb() custom-property wrappers, not literal colours, so those
+ * functions cannot operate on them. Depth comes from layered shadows and
+ * gradients between two theme colours instead.
+ */
+
+/* ---- local tokens -------------------------------------------------
+   Shadows and timings have no theme equivalent, so they are defined once
+   here rather than repeated as magic numbers throughout. Coral itself uses
+   rgba() literals for its own panel shadow, so this follows the theme's
+   own convention. */
+$pitch-shadow-sm: 0 1px 2px rgba(16, 23, 26, 0.06), 0 1px 3px rgba(16, 23, 26, 0.08);
+$pitch-shadow-md: 0 2px 4px rgba(16, 23, 26, 0.06), 0 6px 16px rgba(16, 23, 26, 0.09);
+$pitch-shadow-lg: 0 4px 8px rgba(16, 23, 26, 0.08), 0 16px 32px rgba(16, 23, 26, 0.12);
+$pitch-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+$pitch-dur: 0.42s;
+
+.pitch {
+  display: flex;
+  flex-direction: column;
+  padding:10px !important;
+
+  /* Focusable so the arrow keys work. A full-width default ring is heavy,
+     so an inset rail reads as "the deck has focus" without shouting. */
+  &:focus {
+    outline: none;
+
+    .pitch-progress {
+      box-shadow: 0 0 0 3px $state-info-bg;
+    }
+  }
+
+  /* Numbers are the substance of this deck, so lock them to tabular figures
+     everywhere: columns of digits line up and nothing jitters as values
+     change between slides. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+
+  /* ==================================================================
+     CHROME — progress rail and section dots
+     ================================================================== */
+
+  .pitch-chrome {
+    margin-bottom: $sp-space--xxl;
+  }
+
+  .pitch-progress {
+    height: 5px;
+    background-color: $background-tertiary;
+    border-radius: 999px;
+    overflow: hidden;
+    transition: box-shadow 0.2s $pitch-ease;
+  }
+
+  /* Gradient rather than flat fill: it reads as momentum through the deck. */
+  .pitch-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, $brand-info, $brand-primary);
+    transition: width $pitch-dur $pitch-ease;
+  }
+
+  .pitch-dots {
+    display: flex;
+    gap: $sp-space--sm;
+    justify-content: center;
+    margin-top: $sp-space--lg;
+    flex-wrap: wrap;
+  }
+
+  /* Pill-shaped and wide enough to be a real click target on a laptop
+     trackpad mid-presentation. */
+  .pitch-dot {
+    width: 1.75rem;
+    height: 0.3rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background-color: $background-tertiary;
+    cursor: pointer;
+    transition: background-color 0.2s $pitch-ease, transform 0.2s $pitch-ease;
+
+    &:hover,
+    &:focus {
+      background-color: $border-secondary;
+      transform: scaleY(1.6);
+      outline: none;
+    }
+  }
+
+  .pitch-dot--on {
+    background-image: linear-gradient(90deg, $brand-info, $brand-primary);
+    transform: scaleY(1.6);
+  }
+
+  /* ==================================================================
+     STAGE — fixed footprint so the nav never jumps between slides
+     ================================================================== */
+
+  .pitch-stage {
+    display: flex;
+    align-items: flex-start;
+    min-height: 30rem;
+  }
+
+  .pitch-slide {
+    width: 100%;
+    animation: pitchSlideIn $pitch-dur $pitch-ease both;
+  }
+
+  .pitch-slide--hero {
+    text-align: center;
+    padding: $sp-space--xl 0 $sp-space--lg;
+  }
+
+  /* ==================================================================
+     TYPOGRAPHY — the hierarchy that carries the argument
+     ================================================================== */
+
+  /* Uppercase, wide-tracked, small: reads as a label, not a heading, so it
+     never competes with the title beneath it. */
+  .pitch-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    color: $brand-primary;
+    margin: 0 0 $sp-space--md;
+  }
+
+  /* Display sizing: tight tracking and line-height, because large type set
+     at body spacing looks loose and amateurish on a projector. */
+  .pitch-h1 {
+    font-size: $font-size-h1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    color: $text-primary;
+    margin: 0 0 $sp-space--md;
+  }
+
+  /* A gradient rule under the hero title: one deliberate flourish, placed
+     where it frames the thesis instead of decorating at random. */
+  .pitch-slide--hero .pitch-h1::after {
+    content: '';
+    display: block;
+    width: 5rem;
+    height: 4px;
+    margin: $sp-space--lg auto 0;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, $brand-info, $brand-primary);
+  }
+
+  .pitch-h2 {
+    font-size: $font-size-h2;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    color: $text-primary;
+    margin: 0 0 $sp-space--lg;
+
+    /* A short accent bar to the left of every section title, so each slide
+       announces itself the same way. */
+    &::before {
+      content: '';
+      display: block;
+      width: 2.5rem;
+      height: 3px;
+      margin-bottom: $sp-space--md;
+      border-radius: 999px;
+      background-image: linear-gradient(90deg, $brand-info, $brand-primary);
+    }
+  }
+
+  .pitch-h3 {
+    font-size: $font-size-md;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: $text-secondary;
+    margin: 0 0 $sp-space--md;
+  }
+
+  .pitch-h3--problem {
+    color: $brand-danger;
+  }
+
+  .pitch-h3--solution {
+    color: $brand-success;
+  }
+
+  /* Lead copy: constrained measure, because long lines are unreadable from
+     across a room however large the type. */
+  .pitch-lead {
+    font-size: $font-size-large;
+    line-height: 1.5;
+    color: $text-secondary;
+    max-width: 38rem;
+    margin: 0 auto $sp-space--xl;
+  }
+
+  .pitch-lead-sm {
+    font-size: $font-size-md;
+    line-height: 1.6;
+    color: $text-secondary;
+    max-width: 46rem;
+    margin: 0 0 $sp-space--xl;
+  }
+
+  .pitch-note {
+    font-size: $font-size-small;
+    line-height: 1.55;
+    color: $text-muted;
+    margin: $sp-space--xl 0 0;
+  }
+
+  .pitch-hint {
+    font-size: $font-size-xs;
+    letter-spacing: 0.04em;
+    color: $text-muted;
+    margin: $sp-space--xxl 0 0;
+
+    .fa {
+      margin-right: $sp-space--xs;
+    }
+  }
+
+  /* ---- the thesis: the single most important paragraph in the deck ---- */
+
+  .pitch-thesis {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: $sp-space--xl;
+    text-align: left;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-md;
+    position: relative;
+    overflow: hidden;
+
+    /* Gradient edge instead of a flat border-left: the same accent language
+       as the headings, applied to the one block that must land. */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 4px;
+      background-image: linear-gradient(180deg, $brand-info, $brand-primary);
+    }
+
+    p {
+      font-size: $font-size-md;
+      line-height: 1.65;
+      color: $text-secondary;
+      margin-bottom: $sp-space--lg;
+    }
+
+    .pitch-thesis-punch {
+      font-size: $font-size-large;
+      line-height: 1.45;
+      color: $text-primary;
+      margin-bottom: 0;
+      padding-top: $sp-space--lg;
+      border-top: 1px solid $border-tertiary;
+    }
+  }
+
+  /* ==================================================================
+     LAYOUT PRIMITIVES
+     ================================================================== */
+
+  .pitch-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: $sp-space--xxl;
+  }
+
+  .pitch-col {
+    min-width: 0;
+  }
+
+  .pitch-list {
+    padding-left: $sp-space--lg;
+    margin: 0;
+
+    li {
+      font-size: $font-size-md;
+      line-height: 1.55;
+      color: $text-secondary;
+      margin-bottom: $sp-space--md;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .pitch-list--tight li {
+    font-size: $font-size-small;
+    line-height: 1.5;
+    margin-bottom: $sp-space--sm;
+  }
+
+  /* ---- governance facts: a definition list in list clothing ---- */
+
+  .pitch-facts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      align-items: baseline;
+      gap: $sp-space--md;
+      padding: $sp-space--md 0;
+      border-bottom: 1px solid $border-tertiary;
+      font-size: $font-size-small;
+      line-height: 1.45;
+      color: $text-secondary;
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    /* The figure leads, the label follows — scannable from a distance. */
+    strong {
+      flex: 0 0 3.25rem;
+      font-size: $font-size-large;
+      font-weight: 700;
+      line-height: 1;
+      color: $brand-primary;
+      text-align: right;
+    }
+  }
+
+  /* ---- the quoted sentence: the product demo in one line ---- */
+
+  .pitch-callout {
+    margin-top: $sp-space--xxl;
+    padding: $sp-space--xl;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-sm;
+    text-align: center;
+
+    .fa {
+      display: block;
+      font-size: $font-size-large;
+      color: $brand-primary;
+      margin-bottom: $sp-space--md;
+      opacity: 0.6;
+    }
+
+    span {
+      display: block;
+      font-size: $font-size-large;
+      line-height: 1.4;
+      font-style: italic;
+      color: $text-primary;
+    }
+
+    small {
+      display: block;
+      margin-top: $sp-space--md;
+      font-size: $font-size-xs;
+      letter-spacing: 0.02em;
+      color: $text-muted;
+    }
+  }
+
+  /* ==================================================================
+     ARCHITECTURE STACK
+     ================================================================== */
+
+  .pitch-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pitch-layer {
+    padding: $sp-space--lg $sp-space--xl;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-left-width: 5px;
+    border-radius: $border-radius-base;
+    box-shadow: $pitch-shadow-sm;
+    transition: transform 0.2s $pitch-ease, box-shadow 0.2s $pitch-ease;
+
+    &:hover {
+      transform: translateX(3px);
+      box-shadow: $pitch-shadow-md;
+    }
+  }
+
+  /* One accent per layer, so the stack reads as four distinct
+     responsibilities rather than one wall of text. */
+  .pitch-layer--ui {
+    border-left-color: $brand-info;
+  }
+
+  .pitch-layer--agentic {
+    border-left-color: $brand-primary;
+  }
+
+  .pitch-layer--logic {
+    border-left-color: $brand-success;
+  }
+
+  .pitch-layer--data {
+    border-left-color: $border-secondary;
+  }
+
+  .pitch-layer-name {
+    font-size: $font-size-md;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: $text-primary;
+  }
+
+  .pitch-layer-what {
+    font-size: $font-size-small;
+    line-height: 1.45;
+    color: $text-secondary;
+    margin-top: $sp-space--xs;
+  }
+
+  /* The rule each layer obeys — the actual point of the slide, so it gets
+     its own visual register: smaller, quieter, italic. */
+  .pitch-layer-rule {
+    font-size: $font-size-xs;
+    line-height: 1.45;
+    font-style: italic;
+    color: $text-muted;
+    margin-top: $sp-space--sm;
+    padding-top: $sp-space--sm;
+    border-top: 1px dashed $border-tertiary;
+  }
+
+  .pitch-arrow {
+    text-align: center;
+    color: $border-secondary;
+    line-height: 1;
+    padding: $sp-space--xs 0;
+    font-size: $font-size-small;
+  }
+
+  /* ==================================================================
+     COMPARISON — the contrast that makes the safety case
+     ================================================================== */
+
+  .pitch-compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: $sp-space--lg;
+  }
+
+  .pitch-compare-col {
+    padding: $sp-space--lg;
+    border: 1px solid $border-tertiary;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-sm;
+  }
+
+  .pitch-compare-col--bad {
+    border-color: $brand-danger;
+    background-color: $state-danger-bg;
+  }
+
+  .pitch-compare-col--good {
+    border-color: $brand-success;
+    background-color: $state-success-bg;
+  }
+
+  .pitch-compare-head {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    font-size: $font-size-md;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: $sp-space--md;
+    padding-bottom: $sp-space--md;
+    border-bottom: 1px solid $border-tertiary;
+
+    .fa {
+      font-size: $font-size-large;
+    }
+  }
+
+  /* ==================================================================
+     EVIDENCE — one number that proves the claim
+     ================================================================== */
+
+  .pitch-evidence {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--xl;
+    margin-top: $sp-space--xl;
+    padding: $sp-space--xl;
+    background-color: $state-warning-bg;
+    border: 1px solid $brand-warning;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-sm;
+  }
+
+  /* Oversized on purpose. This figure is the single strongest piece of
+     evidence in the deck, so it is sized like a headline, not a statistic. */
+  .pitch-evidence-number {
+    flex: 0 0 auto;
+    font-size: $font-size-h1;
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: $state-warning-text;
+  }
+
+  .pitch-evidence-text {
+    strong {
+      display: block;
+      font-size: $font-size-md;
+      line-height: 1.35;
+      color: $state-warning-text;
+    }
+
+    small {
+      display: block;
+      margin-top: $sp-space--sm;
+      font-size: $font-size-small;
+      line-height: 1.5;
+      color: $text-secondary;
+    }
+  }
+
+  /* ==================================================================
+     FLOW — propose / authorise / execute
+     ================================================================== */
+
+  .pitch-flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: $sp-space--md;
+    margin-bottom: $sp-space--xl;
+  }
+
+  .pitch-step {
+    padding: $sp-space--lg $sp-space--md;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-sm;
+    text-align: center;
+  }
+
+  /* The approval step is the thesis of this slide, so it is the only one
+     lifted off the row — raised, ringed and warm. */
+  .pitch-step--gate {
+    background-color: $state-warning-bg;
+    border-color: $brand-warning;
+    box-shadow: $pitch-shadow-lg;
+    transform: translateY(-4px);
+  }
+
+  .pitch-step-num {
+    width: 2.5rem;
+    height: 2.5rem;
+    line-height: 2.5rem;
+    margin: 0 auto $sp-space--md;
+    border-radius: 50%;
+    background-image: linear-gradient(135deg, $brand-info, $brand-primary);
+    color: $btn-primary-color;
+    font-size: $font-size-md;
+    font-weight: 700;
+  }
+
+  .pitch-step--gate .pitch-step-num {
+    background-image: none;
+    background-color: $brand-warning;
+    color: $text-primary;
+  }
+
+  .pitch-step-body {
+    strong {
+      display: block;
+      font-size: $font-size-md;
+      font-weight: 700;
+      color: $text-primary;
+    }
+
+    small {
+      display: block;
+      margin-top: $sp-space--sm;
+      font-size: $font-size-xs;
+      line-height: 1.5;
+      color: $text-muted;
+    }
+  }
+
+  /* ---- keypoint: a claim that needs to be read, not skimmed ---- */
+
+  .pitch-keypoint {
+    display: flex;
+    gap: $sp-space--lg;
+    align-items: flex-start;
+    padding: $sp-space--lg;
+    background-color: $state-info-bg;
+    border-radius: $border-radius-large;
+    margin-bottom: $sp-space--xl;
+
+    > .fa {
+      flex: 0 0 auto;
+      font-size: $font-size-large;
+      line-height: 1.4;
+      color: $brand-info;
+    }
+
+    div {
+      font-size: $font-size-small;
+      line-height: 1.6;
+      color: $text-secondary;
+    }
+
+    strong {
+      color: $text-primary;
+    }
+  }
+
+  /* ==================================================================
+     STATS — the live figures, treated as hero elements
+     ================================================================== */
+
+  .pitch-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: $sp-space--md;
+    margin-bottom: $sp-space--xl;
+  }
+
+  .pitch-stat {
+    padding: $sp-space--lg $sp-space--md;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-sm;
+    text-align: center;
+    transition: transform 0.2s $pitch-ease, box-shadow 0.2s $pitch-ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: $pitch-shadow-md;
+    }
+  }
+
+  .pitch-stat-num {
+    font-size: $font-size-h2;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: $brand-primary;
+  }
+
+  .pitch-stat--big .pitch-stat-num {
+    font-size: $font-size-h1;
+  }
+
+  /* Uppercase micro-label: keeps the number unmistakably dominant. */
+  .pitch-stat-label {
+    margin-top: $sp-space--sm;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    line-height: 1.3;
+    color: $text-muted;
+  }
+
+  /* ==================================================================
+     PERIMETER + TABLE
+     ================================================================== */
+
+  .pitch-perimeter {
+    padding: $sp-space--lg;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-left: 4px solid $brand-primary;
+    border-radius: $border-radius-base;
+    box-shadow: $pitch-shadow-sm;
+    margin-bottom: $sp-space--xl;
+  }
+
+  .pitch-perimeter-head {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--sm;
+    font-size: $font-size-md;
+    color: $text-primary;
+    margin-bottom: $sp-space--sm;
+
+    .fa {
+      font-size: $font-size-large;
+      color: $brand-primary;
+    }
+  }
+
+  .pitch-perimeter-body {
+    font-size: $font-size-small;
+    line-height: 1.6;
+    color: $text-secondary;
+  }
+
+  .pitch-table {
+    margin-bottom: $sp-space--xl;
+    background-color: $background-primary;
+    border-radius: $border-radius-base;
+    overflow: hidden;
+    box-shadow: $pitch-shadow-sm;
+
+    th {
+      font-size: $font-size-xs;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: $text-muted;
+      border-bottom: 2px solid $border-tertiary;
+      padding: $sp-space--md;
+    }
+
+    td {
+      font-size: $font-size-md;
+      color: $text-secondary;
+      padding: $sp-space--md;
+      vertical-align: middle;
+    }
+
+    /* Bank id leads, the human name trails quieter beside it. */
+    td strong {
+      color: $text-primary;
+      margin-right: $sp-space--xs;
+    }
+  }
+
+  .pitch-num {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ==================================================================
+     SWAP — what stays vs what gets torn out
+     ================================================================== */
+
+  .pitch-swap {
+    display: flex;
+    align-items: stretch;
+    gap: $sp-space--lg;
+    flex-wrap: wrap;
+    margin-bottom: $sp-space--xxl;
+  }
+
+  .pitch-swap-fixed,
+  .pitch-swap-variable {
+    flex: 1 1 17rem;
+    min-width: 0;
+    padding: $sp-space--lg;
+    border-radius: $border-radius-large;
+  }
+
+  .pitch-swap-fixed {
+    background-color: $state-success-bg;
+    border: 1px solid $brand-success;
+    box-shadow: $pitch-shadow-sm;
+  }
+
+  /* Dashed and flat: visually provisional, because this is the part that is
+     meant to be replaced. */
+  .pitch-swap-variable {
+    background-color: $background-secondary;
+    border: 2px dashed $border-secondary;
+  }
+
+  .pitch-swap-label {
+    font-size: $font-size-xs;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $text-muted;
+    margin-bottom: $sp-space--md;
+    padding-bottom: $sp-space--sm;
+    border-bottom: 1px solid $border-tertiary;
+  }
+
+  .pitch-swap-arrow {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    font-size: $font-size-h3;
+    color: $brand-primary;
+  }
+
+  .pitch-swap-note {
+    margin-top: $sp-space--md;
+    padding-top: $sp-space--sm;
+    border-top: 1px solid $border-tertiary;
+    font-size: $font-size-small;
+    font-weight: 700;
+    color: $brand-primary;
+  }
+
+  /* ---- principles ---- */
+
+  .pitch-principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: $sp-space--md;
+  }
+
+  .pitch-principle {
+    padding: $sp-space--lg;
+    background-color: $background-primary;
+    border: 1px solid $border-tertiary;
+    border-radius: $border-radius-large;
+    box-shadow: $pitch-shadow-sm;
+
+    .pitch-principle-head {
+      font-size: $font-size-small;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: $text-primary;
+      margin-bottom: $sp-space--sm;
+      padding-bottom: $sp-space--sm;
+      border-bottom: 1px solid $border-tertiary;
+    }
+
+    small {
+      display: block;
+      font-size: $font-size-xs;
+      line-height: 1.6;
+      color: $text-muted;
+    }
+  }
+
+  /* ==================================================================
+     OUTCOME CHART
+     ================================================================== */
+
+  .pitch-chart {
+    margin: 0;
+  }
+
+  .pitch-bar-row {
+    display: flex;
+    align-items: center;
+    gap: $sp-space--md;
+    margin-bottom: $sp-space--md;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .pitch-bar-label {
+    flex: 0 0 10.5rem;
+    font-size: $font-size-xs;
+    line-height: 1.35;
+    color: $text-secondary;
+  }
+
+  .pitch-bar-track {
+    flex: 1 1 auto;
+    height: 1.5rem;
+    background-color: $background-tertiary;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .pitch-bar {
+    height: 100%;
+    border-radius: 999px;
+    /* Grows in from zero when the slide mounts, so the chart reads as data
+       arriving rather than as a static image. */
+    animation: pitchBarGrow 0.7s $pitch-ease both;
+    transition: width 0.4s $pitch-ease;
+  }
+
+  /* Mapped per outcome, so a refusal never reads as a failure. */
+  .pitch-outcome--success {
+    background-color: $brand-success;
+  }
+
+  .pitch-outcome--refused {
+    background-color: $brand-warning;
+  }
+
+  .pitch-outcome--failed {
+    background-color: $brand-danger;
+  }
+
+  .pitch-outcome--neutral {
+    background-color: $border-secondary;
+  }
+
+  .pitch-bar-value {
+    flex: 0 0 2.5rem;
+    text-align: right;
+    font-size: $font-size-md;
+    font-weight: 700;
+    color: $text-primary;
+  }
+
+  /* ==================================================================
+     CTA + NAV
+     ================================================================== */
+
+  .pitch-cta {
+    margin-top: $sp-space--xxl;
+    padding-top: $sp-space--xl;
+    border-top: 1px solid $border-tertiary;
+    text-align: center;
+  }
+
+  .pitch-cta-note {
+    display: block;
+    margin-top: $sp-space--md;
+    font-size: $font-size-xs;
+    letter-spacing: 0.03em;
+    color: $text-muted;
+  }
+
+  .pitch-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $sp-space--lg;
+    margin-top: $sp-space--xxl;
+    padding-top: $sp-space--lg;
+    border-top: 1px solid $border-tertiary;
+  }
+
+  .pitch-nav-pos {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $text-muted;
+  }
+
+  /* ==================================================================
+     RESPONSIVE
+     ================================================================== */
+
+  /* Tablet and small laptop: the stage no longer needs a fixed floor, and
+     the swap arrow has to turn to match a stacked layout. */
+  @media (max-width: 62rem) {
+    .pitch-stage {
+      min-height: 0;
+    }
+
+    .pitch-swap-arrow {
+      width: 100%;
+      justify-content: center;
+      transform: rotate(90deg);
+    }
+
+    .pitch-step--gate {
+      transform: none;
+    }
+  }
+
+  @media (max-width: $screen-xs-max) {
+    padding-top: 0;
+
+    .pitch-h1 {
+      font-size: $font-size-h2;
+    }
+
+    .pitch-h2 {
+      font-size: $font-size-h3;
+    }
+
+    .pitch-lead {
+      font-size: $font-size-md;
+    }
+
+    .pitch-thesis {
+      padding: $sp-space--lg;
+    }
+
+    .pitch-split {
+      gap: $sp-space--xl;
+    }
+
+    .pitch-evidence {
+      flex-direction: column;
+      text-align: center;
+      gap: $sp-space--md;
+    }
+
+    .pitch-evidence-number {
+      font-size: $font-size-h2;
+    }
+
+    .pitch-bar-label {
+      flex-basis: 6.5rem;
+    }
+
+    .pitch-stat--big .pitch-stat-num {
+      font-size: $font-size-h2;
+    }
+
+    .pitch-nav .btn {
+      padding-left: $sp-space--md;
+      padding-right: $sp-space--md;
+    }
+  }
+}
+
+/* ==================================================================
+   MOTION
+   ================================================================== */
+
+@keyframes pitchSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.875rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pitchBarGrow {
+  from {
+    width: 0;
+  }
+}
+
+/* Anyone who has asked the OS to reduce motion gets the deck without it.
+   Presentation polish is never worth triggering someone's vestibular
+   disorder on stage. */
+@media (prefers-reduced-motion: reduce) {
+  .pitch {
+    .pitch-slide,
+    .pitch-bar {
+      animation: none;
+    }
+
+    .pitch-layer,
+    .pitch-stat,
+    .pitch-dot,
+    .pitch-progress-fill,
+    .pitch-bar {
+      transition: none;
+    }
+
+    .pitch-layer:hover,
+    .pitch-stat:hover {
+      transform: none;
+    }
+  }
+}
