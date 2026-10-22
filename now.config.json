@@ -1,0 +1,6 @@
+{
+  "scope": "x_snc_card_manag_1",
+  "scopeId": "888d25e9fb4c9f500910f2e04eefdca6",
+  "name": "Card Management",
+  "tsconfigPath": "./src/server/tsconfig.json"
+}
